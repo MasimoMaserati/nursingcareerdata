@@ -1,11 +1,57 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import wages from '../../../data/rn-state-wages.json';
-const published = wages.filter((item) => Number.isFinite(item.annualMeanWage) && item.referenceYear);
+const published = wages
+  .filter((item) => item.annualMedianWage != null && item.referenceYear)
+  .sort((a, b) => b.annualMedianWage - a.annualMedianWage);
+const money = (value) => value == null ? '—' : new Intl.NumberFormat('en-US', {
+  style: 'currency', currency: 'USD', maximumFractionDigits: 0
+}).format(value);
 ---
-<BaseLayout title="Registered Nurse Salary Data" description="Explore registered nurse salary data in the United States, with sources and reference years.">
-<main><p class="eyebrow">Nursing salary</p><h1>Registered Nurse Salary Data</h1>
-<p class="lead">Explore U.S. registered nurse wages by state. Every published figure includes its source and reference year.</p>
-{published.length ? <div class="grid">{published.map((item) => <article class="panel"><h2>{item.state}</h2><p>Annual mean wage: ${item.annualMeanWage.toLocaleString('en-US')}</p><a href={`/nursing-salary/registered-nurse/${item.stateSlug}/`}>View salary data →</a></article>)}</div> :
-<section class="panel"><h2>State salary pages are being prepared</h2><p class="muted">We are validating official wage data before publishing state-level figures. No estimated or invented salary values are displayed.</p><a href="/methodology/">Read our methodology →</a></section>}
-</main></BaseLayout>
+<BaseLayout title="Registered Nurse Salary by State (2025)" description="Compare May 2025 BLS registered nurse median and mean wages by U.S. state. Every figure includes its official source and reference period.">
+<main>
+  <p class="eyebrow">U.S. nursing salary data · BLS OEWS</p>
+  <h1>Registered Nurse Salary by State</h1>
+  <p class="lead">Compare Registered Nurse (SOC 29-1141) wages across the United States using the latest imported BLS Occupational Employment and Wage Statistics state estimates.</p>
+  {published.length > 0 ? <>
+    <section class="panel">
+      <h2>About this dataset</h2>
+      <p>Reference period: May {published[0].referenceYear}. Source: U.S. Bureau of Labor Statistics (BLS), Occupational Employment and Wage Statistics (OEWS).</p>
+      <p>Median wage is the midpoint of the wage distribution; mean wage is the arithmetic average. These measures are not interchangeable.</p>
+      <p class="muted">Showing {published.length} jurisdictions with a published state-level estimate, including the District of Columbia when available.</p>
+    </section>
+    <section>
+      <h2>State salary comparison</h2>
+      <div class="panel" style="overflow-x:auto">
+        <table>
+          <thead><tr><th scope="col">State</th><th scope="col">Annual median</th><th scope="col">Annual mean</th><th scope="col">Hourly mean</th><th scope="col">Employment</th></tr></thead>
+          <tbody>
+            {published.map((item) => <tr>
+              <th scope="row"><a href={`/nursing-salary/registered-nurse/${item.stateSlug}/`}>{item.state}</a></th>
+              <td>{money(item.annualMedianWage)}</td>
+              <td>{money(item.annualMeanWage)}</td>
+              <td>{money(item.hourlyMeanWage)}</td>
+              <td>{item.employment == null ? '—' : Math.round(item.employment).toLocaleString('en-US')}</td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section><h2>Explore state salary profiles</h2><div class="grid">
+      {published.map((item) => <article class="panel">
+        <h3>{item.state}</h3>
+        <p class="muted">Annual median wage</p>
+        <h2>{money(item.annualMedianWage)}</h2>
+        <a href={`/nursing-salary/registered-nurse/${item.stateSlug}/`}>View {item.state} RN salary →</a>
+      </article>)}
+    </div></section>
+  </> : <section class="panel"><h2>Official state data is not available in this build</h2><p class="muted">The BLS import runs before each production build. Check the deployment log for the data-import result; no placeholder salary values are displayed.</p><a href="/methodology/">Read our methodology →</a></section>}
+  <section class="panel"><h2>Source and limitations</h2><p>OEWS estimates are survey-based/model-assisted estimates of employment and wages. Coverage and availability vary by occupation and geographic area. A missing value is not zero.</p><p><a href="https://www.bls.gov/oes/2025/may/oessrcst.htm">View BLS May 2025 state tables →</a></p></section>
+</main>
+</BaseLayout>
+<style>
+table { width:100%; border-collapse:collapse; min-width:720px; font-size:.95rem; }
+th,td { padding:12px 14px; border-bottom:1px solid #e1e8f0; text-align:left; white-space:nowrap; }
+thead th { background:#f2f6fa; color:#334e68; }
+tbody tr:hover { background:#f7fafc; }
+</style>
