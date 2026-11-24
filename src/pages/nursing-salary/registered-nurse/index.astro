@@ -1,0 +1,11 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import wages from '../../../data/rn-state-wages.json';
+const published = wages.filter((item) => Number.isFinite(item.annualMeanWage) && item.referenceYear);
+---
+<BaseLayout title="Registered Nurse Salary Data" description="Explore registered nurse salary data in the United States, with sources and reference years.">
+<main><p class="eyebrow">Nursing salary</p><h1>Registered Nurse Salary Data</h1>
+<p class="lead">Explore U.S. registered nurse wages by state. Every published figure includes its source and reference year.</p>
+{published.length ? <div class="grid">{published.map((item) => <article class="panel"><h2>{item.state}</h2><p>Annual mean wage: ${item.annualMeanWage.toLocaleString('en-US')}</p><a href={`/nursing-salary/registered-nurse/${item.stateSlug}/`}>View salary data →</a></article>)}</div> :
+<section class="panel"><h2>State salary pages are being prepared</h2><p class="muted">We are validating official wage data before publishing state-level figures. No estimated or invented salary values are displayed.</p><a href="/methodology/">Read our methodology →</a></section>}
+</main></BaseLayout>

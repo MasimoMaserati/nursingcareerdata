@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import wages from '../../../data/rn-state-wages.json';
+export function getStaticPaths() {
+ return wages.filter((item) => Number.isFinite(item.annualMeanWage) && item.referenceYear)
+ .map((item) => ({ params: { state: item.stateSlug }, props: { salary: item } }));
+}
+const { salary } = Astro.props;
+const money = (value) => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(value);
+---
+<BaseLayout title={`Registered Nurse Salary in ${salary.state}`} description={`Registered nurse wage data for ${salary.state}. Source: ${salary.source}.`}>
+<main><p class="eyebrow">Registered Nurse Salary</p><h1>Registered Nurse Salary in {salary.state}</h1>
+<p class="lead">Wage estimates for registered nurses in {salary.state}, based on the source and reference period shown below.</p>
+<section class="grid">
+{salary.annualMeanWage != null && <article class="panel"><p class="muted">Annual mean wage</p><h2>{money(salary.annualMeanWage)}</h2></article>}
+{salary.annualMedianWage != null && <article class="panel"><p class="muted">Annual median wage</p><h2>{money(salary.annualMedianWage)}</h2></article>}
+{salary.hourlyMeanWage != null && <article class="panel"><p class="muted">Hourly mean wage</p><h2>{money(salary.hourlyMeanWage)}</h2></article>}
+</section><section class="panel"><h2>Source and reference period</h2><p>Source: {salary.source}</p><p>Reference year: {salary.referenceYear}</p>
+{salary.employment != null && <p>Employment estimate: {salary.employment.toLocaleString('en-US')}</p>}<p><a href={salary.sourceUrl}>View source dataset →</a></p></section>
+<p><a href="/nursing-salary/registered-nurse/">← Back to RN salary data</a></p></main></BaseLayout>

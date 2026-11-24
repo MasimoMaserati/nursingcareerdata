@@ -1,0 +1,14 @@
+[
+  {
+    "state": "California",
+    "stateSlug": "california",
+    "occupation": "29-1141",
+    "referenceYear": null,
+    "annualMeanWage": null,
+    "annualMedianWage": null,
+    "hourlyMeanWage": null,
+    "employment": null,
+    "source": "U.S. Bureau of Labor Statistics, OEWS",
+    "sourceUrl": "https://www.bls.gov/oes/"
+  }
+]

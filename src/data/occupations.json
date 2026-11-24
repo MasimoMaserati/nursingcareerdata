@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Registered Nurse",
+    "slug": "registered-nurse",
+    "socCode": "29-1141",
+    "abbreviation": "RN"
+  },
+  {
+    "name": "Nurse Practitioner",
+    "slug": "nurse-practitioner",
+    "socCode": "29-1171",
+    "abbreviation": "NP"
+  },
+  {
+    "name": "Licensed Practical and Licensed Vocational Nurse",
+    "slug": "licensed-practical-nurse",
+    "socCode": "29-2061",
+    "abbreviation": "LPN/LVN"
+  }
+]
