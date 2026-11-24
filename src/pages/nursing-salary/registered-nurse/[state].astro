@@ -9,26 +9,65 @@ export function getStaticPaths() {
 }
 
 const { salary } = Astro.props;
-const money = (value) => value == null ? '—' : new Intl.NumberFormat('en-US', {
-  style: 'currency', currency: 'USD', maximumFractionDigits: 0
+const published = wages
+  .filter((item) => item.annualMedianWage != null && item.referenceYear)
+  .sort((a, b) => b.annualMedianWage - a.annualMedianWage);
+const rank = published.findIndex((item) => item.stateSlug === salary.stateSlug) + 1;
+const rankPeers = published
+  .filter((item) => item.stateSlug !== salary.stateSlug)
+  .sort((a, b) => Math.abs(a.annualMedianWage - salary.annualMedianWage) - Math.abs(b.annualMedianWage - salary.annualMedianWage))
+  .slice(0, 3);
+const money = (value, digits = 0) => value == null ? '—' : new Intl.NumberFormat('en-US', {
+  style: 'currency', currency: 'USD', minimumFractionDigits: digits, maximumFractionDigits: digits
 }).format(value);
 const number = (value) => value == null ? '—' : Math.round(value).toLocaleString('en-US');
+const faq = [
+  {
+    question: `What is the median Registered Nurse salary in ${salary.state}?`,
+    answer: `The BLS May ${salary.referenceYear} estimate reports an annual median wage of ${money(salary.annualMedianWage)} for Registered Nurses in ${salary.state}. The median is the 50th percentile: half of reported wage observations are below it and half are above it.`
+  },
+  {
+    question: `What is the average Registered Nurse salary in ${salary.state}?`,
+    answer: `The BLS May ${salary.referenceYear} estimate reports an annual mean wage of ${money(salary.annualMeanWage)} and an hourly mean wage of ${money(salary.hourlyMeanWage, 2)} for Registered Nurses in ${salary.state}. Mean wages are arithmetic averages and can differ from median wages.`
+  },
+  {
+    question: `Where do these Registered Nurse salary figures come from?`,
+    answer: `These figures come from the U.S. Bureau of Labor Statistics Occupational Employment and Wage Statistics program for Registered Nurses, occupation code 29-1141, with a May ${salary.referenceYear} reference period.`
+  },
+  {
+    question: `Do these BLS estimates represent every nurse's actual pay?`,
+    answer: `No. OEWS figures are occupational wage estimates for a geographic area, not a promise of an individual's pay. Actual compensation can vary with employer, experience, specialty, schedule, location, and other factors.`
+  }
+];
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: { '@type': 'Answer', text: item.answer }
+  }))
+};
 ---
-<BaseLayout title={`Registered Nurse Salary in ${salary.state} (${salary.referenceYear})`} description={`May ${salary.referenceYear} BLS wage estimates for Registered Nurses in ${salary.state}: annual median, annual mean, hourly mean, and employment.`}>
+<BaseLayout title={`Registered Nurse Salary in ${salary.state} (${salary.referenceYear})`} description={`May ${salary.referenceYear} BLS wage estimates for Registered Nurses in ${salary.state}: annual median, annual mean, hourly mean, employment, and wage percentiles.`}>
+<script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
 <main>
   <p class="eyebrow">Registered Nurse salary · BLS OEWS</p>
   <h1>Registered Nurse Salary in {salary.state}</h1>
   <p class="lead">How much do Registered Nurses earn in {salary.state}? Explore official BLS wage estimates for May {salary.referenceYear}, occupation code 29-1141.</p>
-  <section class="grid">
+
+  <section class="grid" aria-label="Key Registered Nurse wage estimates">
     <article class="panel"><p class="muted">Annual median wage</p><h2>{money(salary.annualMedianWage)}</h2><p class="muted">50th percentile</p></article>
     <article class="panel"><p class="muted">Annual mean wage</p><h2>{money(salary.annualMeanWage)}</h2><p class="muted">Average annual wage</p></article>
-    <article class="panel"><p class="muted">Hourly mean wage</p><h2>{money(salary.hourlyMeanWage)}</h2><p class="muted">Average hourly wage</p></article>
+    <article class="panel"><p class="muted">Hourly mean wage</p><h2>{money(salary.hourlyMeanWage, 2)}</h2><p class="muted">Average hourly wage</p></article>
   </section>
+
   <section class="panel">
     <h2>Registered Nurse employment in {salary.state}</h2>
     <p><strong>{number(salary.employment)}</strong> estimated jobs</p>
     <p class="muted">BLS employment estimates count jobs, not professional licenses or unique people.</p>
   </section>
+
   <section class="panel">
     <h2>Wage distribution</h2>
     <p>Annual 10th percentile: <strong>{money(salary.annual10thPercentile)}</strong></p>
@@ -37,13 +76,49 @@ const number = (value) => value == null ? '—' : Math.round(value).toLocaleStri
     <p>Annual 75th percentile: <strong>{money(salary.annual75thPercentile)}</strong></p>
     <p>Annual 90th percentile: <strong>{money(salary.annual90thPercentile)}</strong></p>
   </section>
+
+  <section class="panel">
+    <h2>{salary.state} RN salary ranking</h2>
+    <p>Among {published.length} published state and district estimates, {salary.state} ranks <strong>#{rank}</strong> by annual median wage for May {salary.referenceYear}.</p>
+    <p class="muted">Ranking is calculated from the currently imported BLS state/DC dataset and may change when the reference year is updated.</p>
+    <a href="/nursing-salary/registered-nurse/">View the complete RN salary ranking →</a>
+  </section>
+
+  {rankPeers.length > 0 && <section class="panel">
+    <h2>Compare RN salaries in other states</h2>
+    <p class="muted">These profiles have median wages closest to {salary.state} in the current BLS dataset; they are not necessarily neighboring states.</p>
+    <div class="comparison-list">
+      {rankPeers.map((item) => <div class="comparison-row">
+        <a href={`/nursing-salary/registered-nurse/${item.stateSlug}/`}>{item.state}</a>
+        <strong>{money(item.annualMedianWage)}</strong>
+      </div>)}
+    </div>
+  </section>}
+
+  <section class="panel">
+    <h2>Frequently asked questions about RN pay in {salary.state}</h2>
+    {faq.map((item) => <details>
+      <summary>{item.question}</summary>
+      <p>{item.answer}</p>
+    </details>)}
+  </section>
+
   <section class="panel">
     <h2>Data source and reference period</h2>
     <p>Source: {salary.source}</p>
     <p>Occupation: {salary.occupationTitle} ({salary.occupation})</p>
     <p>Reference period: May {salary.referenceYear}</p>
-    <p><a href={salary.sourceUrl}>View the official BLS state wage tables →</a></p>
+    <p><a href={salary.sourceUrl} rel="noopener noreferrer">View the official BLS state wage tables →</a></p>
   </section>
   <p><a href="/nursing-salary/registered-nurse/">← Compare RN salaries by state</a></p>
 </main>
 </BaseLayout>
+<style>
+.comparison-list{display:grid;gap:0}
+.comparison-row{display:flex;justify-content:space-between;gap:20px;padding:12px 0;border-bottom:1px solid #e1e8f0}
+.comparison-row:last-child{border-bottom:0}
+details{padding:16px 0;border-bottom:1px solid #e1e8f0}
+details:last-child{border-bottom:0}
+summary{cursor:pointer;font-weight:700;color:#102a43}
+details p{color:#526579;margin-bottom:0}
+</style>
