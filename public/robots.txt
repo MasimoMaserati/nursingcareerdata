@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nursingcareerdata.com/sitemap-index.xml
