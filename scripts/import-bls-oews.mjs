@@ -94,7 +94,7 @@ const nationalResponse = await fetch(NATIONAL_URL, {
 });
 if (!nationalResponse.ok) throw new Error(`BLS national download failed: HTTP ${nationalResponse.status}`);
 const nationalArchive = unzipSync(new Uint8Array(await nationalResponse.arrayBuffer()));
-const nationalEntry = Object.entries(nationalArchive).find(([name]) => /national.*m2025.*\\.xlsx$/i.test(name));
+const nationalEntry = Object.entries(nationalArchive).find(([name]) => /national.*m2025.*\.xlsx$/i.test(name));
 if (!nationalEntry) throw new Error('Could not find the May 2025 national XLSX workbook inside the BLS archive.');
 const nationalWorkbook = XLSX.read(nationalEntry[1], { type: 'array' });
 const nationalSheet = nationalWorkbook.Sheets[nationalWorkbook.SheetNames[0]];
@@ -138,6 +138,6 @@ if (nationalOutput.annualMedianWage == null || nationalOutput.annualMeanWage == 
 }
 
 await mkdir(new URL('../src/data/', import.meta.url), { recursive: true });
-await writeFile(new URL('../src/data/rn-state-wages.json', import.meta.url), JSON.stringify(output, null, 2) + '\\n');
-await writeFile(new URL('../src/data/rn-national-wage.json', import.meta.url), JSON.stringify(nationalOutput, null, 2) + '\\n');
+await writeFile(new URL('../src/data/rn-state-wages.json', import.meta.url), JSON.stringify(output, null, 2) + '\n');
+await writeFile(new URL('../src/data/rn-national-wage.json', import.meta.url), JSON.stringify(nationalOutput, null, 2) + '\n');
 console.log(`Generated ${output.length} verified RN state/DC records and one independently sourced U.S. record for May ${YEAR}.`);
