@@ -1,0 +1,19 @@
+{
+  "geography": "United States",
+  "occupation": "29-1141",
+  "occupationTitle": "Registered Nurses",
+  "referenceYear": null,
+  "referencePeriod": "May",
+  "annualMeanWage": null,
+  "annualMedianWage": null,
+  "hourlyMeanWage": null,
+  "hourlyMedianWage": null,
+  "employment": null,
+  "annual10thPercentile": null,
+  "annual25thPercentile": null,
+  "annual75thPercentile": null,
+  "annual90thPercentile": null,
+  "source": "U.S. Bureau of Labor Statistics, Occupational Employment and Wage Statistics",
+  "sourceUrl": "https://www.bls.gov/oes/2025/may/oes_nat.htm",
+  "downloadUrl": "https://www.bls.gov/oes/special.requests/oesm25nat.zip"
+}
