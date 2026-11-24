@@ -1,20 +1,49 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import wages from '../../../data/rn-state-wages.json';
+
 export function getStaticPaths() {
- return wages.filter((item) => Number.isFinite(item.annualMeanWage) && item.referenceYear)
- .map((item) => ({ params: { state: item.stateSlug }, props: { salary: item } }));
+  return wages
+    .filter((item) => item.annualMedianWage != null && item.referenceYear)
+    .map((item) => ({ params: { state: item.stateSlug }, props: { salary: item } }));
 }
+
 const { salary } = Astro.props;
-const money = (value) => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(value);
+const money = (value) => value == null ? '—' : new Intl.NumberFormat('en-US', {
+  style: 'currency', currency: 'USD', maximumFractionDigits: 0
+}).format(value);
+const number = (value) => value == null ? '—' : Math.round(value).toLocaleString('en-US');
 ---
-<BaseLayout title={`Registered Nurse Salary in ${salary.state}`} description={`Registered nurse wage data for ${salary.state}. Source: ${salary.source}.`}>
-<main><p class="eyebrow">Registered Nurse Salary</p><h1>Registered Nurse Salary in {salary.state}</h1>
-<p class="lead">Wage estimates for registered nurses in {salary.state}, based on the source and reference period shown below.</p>
-<section class="grid">
-{salary.annualMeanWage != null && <article class="panel"><p class="muted">Annual mean wage</p><h2>{money(salary.annualMeanWage)}</h2></article>}
-{salary.annualMedianWage != null && <article class="panel"><p class="muted">Annual median wage</p><h2>{money(salary.annualMedianWage)}</h2></article>}
-{salary.hourlyMeanWage != null && <article class="panel"><p class="muted">Hourly mean wage</p><h2>{money(salary.hourlyMeanWage)}</h2></article>}
-</section><section class="panel"><h2>Source and reference period</h2><p>Source: {salary.source}</p><p>Reference year: {salary.referenceYear}</p>
-{salary.employment != null && <p>Employment estimate: {salary.employment.toLocaleString('en-US')}</p>}<p><a href={salary.sourceUrl}>View source dataset →</a></p></section>
-<p><a href="/nursing-salary/registered-nurse/">← Back to RN salary data</a></p></main></BaseLayout>
+<BaseLayout title={`Registered Nurse Salary in ${salary.state} (${salary.referenceYear})`} description={`May ${salary.referenceYear} BLS wage estimates for Registered Nurses in ${salary.state}: annual median, annual mean, hourly mean, and employment.`}>
+<main>
+  <p class="eyebrow">Registered Nurse salary · BLS OEWS</p>
+  <h1>Registered Nurse Salary in {salary.state}</h1>
+  <p class="lead">How much do Registered Nurses earn in {salary.state}? Explore official BLS wage estimates for May {salary.referenceYear}, occupation code 29-1141.</p>
+  <section class="grid">
+    <article class="panel"><p class="muted">Annual median wage</p><h2>{money(salary.annualMedianWage)}</h2><p class="muted">50th percentile</p></article>
+    <article class="panel"><p class="muted">Annual mean wage</p><h2>{money(salary.annualMeanWage)}</h2><p class="muted">Average annual wage</p></article>
+    <article class="panel"><p class="muted">Hourly mean wage</p><h2>{money(salary.hourlyMeanWage)}</h2><p class="muted">Average hourly wage</p></article>
+  </section>
+  <section class="panel">
+    <h2>Registered Nurse employment in {salary.state}</h2>
+    <p><strong>{number(salary.employment)}</strong> estimated jobs</p>
+    <p class="muted">BLS employment estimates count jobs, not professional licenses or unique people.</p>
+  </section>
+  <section class="panel">
+    <h2>Wage distribution</h2>
+    <p>Annual 10th percentile: <strong>{money(salary.annual10thPercentile)}</strong></p>
+    <p>Annual 25th percentile: <strong>{money(salary.annual25thPercentile)}</strong></p>
+    <p>Annual median (50th percentile): <strong>{money(salary.annualMedianWage)}</strong></p>
+    <p>Annual 75th percentile: <strong>{money(salary.annual75thPercentile)}</strong></p>
+    <p>Annual 90th percentile: <strong>{money(salary.annual90thPercentile)}</strong></p>
+  </section>
+  <section class="panel">
+    <h2>Data source and reference period</h2>
+    <p>Source: {salary.source}</p>
+    <p>Occupation: {salary.occupationTitle} ({salary.occupation})</p>
+    <p>Reference period: May {salary.referenceYear}</p>
+    <p><a href={salary.sourceUrl}>View the official BLS state wage tables →</a></p>
+  </section>
+  <p><a href="/nursing-salary/registered-nurse/">← Compare RN salaries by state</a></p>
+</main>
+</BaseLayout>
