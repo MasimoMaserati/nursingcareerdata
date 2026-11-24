@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 const YEAR = 2025;
 const OCC_CODE = '29-1141';
 const SOURCE_URL = 'https://www.bls.gov/oes/special-requests/oesm25st.zip';
-const SOURCE_PAGE = 'https://www.bls.gov/oes/2025/may/oessrcst.htm';
+const SOURCE_PAGE = 'https://www.bls.gov/oes/tables.htm';
 
 const states = [
   ['Alabama','alabama'],['Alaska','alaska'],['Arizona','arizona'],['Arkansas','arkansas'],
@@ -87,7 +87,7 @@ if (output.length < 45) {
 // Import the national estimate independently. Do not derive a U.S. figure by
 // averaging state wages: BLS publishes a separate national OEWS estimate.
 const NATIONAL_URL = 'https://www.bls.gov/oes/special.requests/oesm25nat.zip';
-const NATIONAL_PAGE = 'https://www.bls.gov/oes/2025/may/oes_nat.htm';
+const NATIONAL_PAGE = 'https://www.bls.gov/oes/tables.htm';
 console.log(`Downloading BLS OEWS May ${YEAR} national workbook...`);
 const nationalResponse = await fetch(NATIONAL_URL, {
   headers: { 'User-Agent': 'NursingCareerData/1.0 (public wage data ingestion)' }
