@@ -6,10 +6,13 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "prebuild": "node scripts/import-bls-oews.mjs"
   },
   "dependencies": {
-    "astro": "^5.16.0"
+    "astro": "^5.16.0",
+    "fflate": "^0.8.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
