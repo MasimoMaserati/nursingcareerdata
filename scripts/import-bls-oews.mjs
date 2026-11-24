@@ -83,6 +83,61 @@ const output = states.map(([state]) => byState.get(state)).filter(Boolean);
 if (output.length < 45) {
   throw new Error(`Only ${output.length} of 50 state/DC records matched. Refusing to publish an incomplete or mis-mapped dataset.`);
 }
+
+// Import the national estimate independently. Do not derive a U.S. figure by
+// averaging state wages: BLS publishes a separate national OEWS estimate.
+const NATIONAL_URL = 'https://www.bls.gov/oes/special.requests/oesm25nat.zip';
+const NATIONAL_PAGE = 'https://www.bls.gov/oes/2025/may/oes_nat.htm';
+console.log(`Downloading BLS OEWS May ${YEAR} national workbook...`);
+const nationalResponse = await fetch(NATIONAL_URL, {
+  headers: { 'User-Agent': 'NursingCareerData/1.0 (public wage data ingestion)' }
+});
+if (!nationalResponse.ok) throw new Error(`BLS national download failed: HTTP ${nationalResponse.status}`);
+const nationalArchive = unzipSync(new Uint8Array(await nationalResponse.arrayBuffer()));
+const nationalEntry = Object.entries(nationalArchive).find(([name]) => /national.*m2025.*\\.xlsx$/i.test(name));
+if (!nationalEntry) throw new Error('Could not find the May 2025 national XLSX workbook inside the BLS archive.');
+const nationalWorkbook = XLSX.read(nationalEntry[1], { type: 'array' });
+const nationalSheet = nationalWorkbook.Sheets[nationalWorkbook.SheetNames[0]];
+const nationalRows = XLSX.utils.sheet_to_json(nationalSheet, { defval: null, raw: false });
+if (!nationalRows.length) throw new Error('The BLS national workbook contains no rows.');
+const nationalHeaders = Object.keys(nationalRows[0]);
+for (const required of ['AREA','AREA_TITLE','OCC_CODE','A_MEAN','A_MEDIAN','H_MEAN','TOT_EMP']) {
+  if (!nationalHeaders.includes(required)) throw new Error(`Unexpected BLS national workbook schema: missing ${required}`);
+}
+const nationalMatches = nationalRows.filter((row) =>
+  String(row.OCC_CODE).trim() === OCC_CODE &&
+  (row.NAICS == null || String(row.NAICS).trim() === '000000') &&
+  (row.OWN_CODE == null || String(row.OWN_CODE).trim() === '1235') &&
+  String(row.AREA).trim() === '1'
+);
+if (nationalMatches.length !== 1) {
+  throw new Error(`Expected exactly one all-industry/all-ownership national RN row (AREA=1); found ${nationalMatches.length}. Refusing to publish guessed national figures.`);
+}
+const nationalRow = nationalMatches[0];
+const nationalOutput = {
+  geography: 'United States',
+  occupation: OCC_CODE,
+  occupationTitle: 'Registered Nurses',
+  referenceYear: YEAR,
+  referencePeriod: 'May',
+  annualMeanWage: numeric(nationalRow.A_MEAN),
+  annualMedianWage: numeric(nationalRow.A_MEDIAN),
+  hourlyMeanWage: numeric(nationalRow.H_MEAN),
+  hourlyMedianWage: numeric(nationalRow.H_MEDIAN),
+  employment: numeric(nationalRow.TOT_EMP),
+  annual10thPercentile: numeric(nationalRow.A_PCT10),
+  annual25thPercentile: numeric(nationalRow.A_PCT25),
+  annual75thPercentile: numeric(nationalRow.A_PCT75),
+  annual90thPercentile: numeric(nationalRow.A_PCT90),
+  source: 'U.S. Bureau of Labor Statistics, Occupational Employment and Wage Statistics',
+  sourceUrl: NATIONAL_PAGE,
+  downloadUrl: NATIONAL_URL
+};
+if (nationalOutput.annualMedianWage == null || nationalOutput.annualMeanWage == null) {
+  throw new Error('The BLS national RN row is missing required wage values.');
+}
+
 await mkdir(new URL('../src/data/', import.meta.url), { recursive: true });
-await writeFile(new URL('../src/data/rn-state-wages.json', import.meta.url), JSON.stringify(output, null, 2) + '\n');
-console.log(`Generated ${output.length} verified RN state/DC records for May ${YEAR}.`);
+await writeFile(new URL('../src/data/rn-state-wages.json', import.meta.url), JSON.stringify(output, null, 2) + '\\n');
+await writeFile(new URL('../src/data/rn-national-wage.json', import.meta.url), JSON.stringify(nationalOutput, null, 2) + '\\n');
+console.log(`Generated ${output.length} verified RN state/DC records and one independently sourced U.S. record for May ${YEAR}.`);
