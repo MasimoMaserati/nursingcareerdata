@@ -57,6 +57,8 @@ const faqSchema = {
   <h1>Registered Nurse Salary by State</h1>
   <p class="lead">Compare Registered Nurse (SOC 29-1141) wages across the United States using official BLS Occupational Employment and Wage Statistics estimates for May {referenceYear}.</p>
 
+  <section class="panel calculator-promo"><div><h2>Compare your RN salary</h2><p class="muted">Choose a state, view official wage benchmarks, and compare your annual salary with state and U.S. medians.</p></div><a class="button" href="/nursing-salary/registered-nurse/calculator/">Open salary calculator →</a></section>
+
   {published.length > 0 ? <>
     <section class="panel dataset-intro">
       <h2>U.S. Registered Nurse salary overview</h2>
@@ -170,4 +172,11 @@ details p{color:#526579;margin-bottom:0}
 .national-distribution h3{margin-bottom:6px;color:#102a43}
 .percentile-table{min-width:520px}
 @media(max-width:650px){.summary-grid strong{font-size:1.35rem}}
+</style>
+
+<style>
+.calculator-promo{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:24px 0}
+.calculator-promo h2{margin-top:0}
+.calculator-promo p{margin-bottom:0}
+@media(max-width:650px){.calculator-promo{align-items:flex-start;flex-direction:column}}
 </style>
