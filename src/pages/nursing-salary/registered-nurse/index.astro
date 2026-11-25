@@ -50,7 +50,7 @@ const faqSchema = {
   }))
 };
 ---
-<BaseLayout title={`Registered Nurse Salary by State (${referenceYear})`} description={`Compare official BLS May ${referenceYear} Registered Nurse salary estimates across all available U.S. states and the District of Columbia. View national wages, state rankings, employment, and hourly pay.`}>
+<BaseLayout title={`Registered Nurse Salary by State (${referenceYear})`} description={`Compare official BLS May ${referenceYear} Registered Nurse salary estimates across all available U.S. states and the District of Columbia. View national annual and hourly wage distributions, state rankings, employment, and pay differences from the U.S. median.`}>
 <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
 <main>
   <p class="eyebrow">U.S. nursing salary data · BLS OEWS</p>
@@ -65,8 +65,25 @@ const faqSchema = {
         <article><span>U.S. annual median wage</span><strong>{money(national.annualMedianWage)}</strong><small>50th percentile</small></article>
         <article><span>U.S. annual mean wage</span><strong>{money(national.annualMeanWage)}</strong><small>Arithmetic average</small></article>
         <article><span>U.S. hourly mean wage</span><strong>{money(national.hourlyMeanWage, 2)}</strong><small>Average hourly wage</small></article>
+        <article><span>U.S. hourly median wage</span><strong>{money(national.hourlyMedianWage, 2)}</strong><small>50th percentile</small></article>
         <article><span>U.S. RN employment</span><strong>{number(national.employment)}</strong><small>Estimated jobs</small></article>
       </div>
+      <section class="national-distribution" aria-labelledby="national-distribution-title">
+        <h3 id="national-distribution-title">U.S. wage distribution</h3>
+        <p class="muted">Published BLS annual and hourly wage thresholds for Registered Nurses. The percentiles describe the wage distribution; they are not starting-pay or guaranteed salary ranges.</p>
+        <div class="table-wrap">
+          <table class="percentile-table">
+            <thead><tr><th scope="col">Percentile</th><th scope="col">Annual wage</th><th scope="col">Hourly wage</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">10th</th><td>{money(national.annual10thPercentile)}</td><td>{money(national.hourly10thPercentile, 2)}</td></tr>
+              <tr><th scope="row">25th</th><td>{money(national.annual25thPercentile)}</td><td>{money(national.hourly25thPercentile, 2)}</td></tr>
+              <tr><th scope="row">50th (median)</th><td><strong>{money(national.annualMedianWage)}</strong></td><td><strong>{money(national.hourlyMedianWage, 2)}</strong></td></tr>
+              <tr><th scope="row">75th</th><td>{money(national.annual75thPercentile)}</td><td>{money(national.hourly75thPercentile, 2)}</td></tr>
+              <tr><th scope="row">90th</th><td>{money(national.annual90thPercentile)}</td><td>{money(national.hourly90thPercentile, 2)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
       <p class="muted">Reference period: May {referenceYear}. Occupation: Registered Nurses (29-1141).</p>
     </section>
 
@@ -85,10 +102,10 @@ const faqSchema = {
 
     <section>
       <h2>State salary comparison and ranking</h2>
-      <p class="muted">Rank is based on annual median wage, highest to lowest. Difference from U.S. median is shown in dollars. The national benchmark is sourced independently from BLS.</p>
+      <p class="muted">Rank is based on annual median wage, highest to lowest. The difference column compares each jurisdiction's annual median with the independently published U.S. annual median of {money(national.annualMedianWage)}.</p>
       <div class="panel table-wrap">
         <table>
-          <thead><tr><th scope="col">Rank</th><th scope="col">State / district</th><th scope="col">Annual median</th><th scope="col">Vs. U.S. median</th><th scope="col">Annual mean</th><th scope="col">Hourly mean</th><th scope="col">Employment</th></tr></thead>
+          <thead><tr><th scope="col">Rank</th><th scope="col">State / district</th><th scope="col">Annual median</th><th scope="col">Difference from U.S. annual median</th><th scope="col">Annual mean</th><th scope="col">Hourly mean</th><th scope="col">Employment</th></tr></thead>
           <tbody>
             {published.map((item, index) => <tr>
               <td>{index + 1}</td>
@@ -149,5 +166,8 @@ details:last-child{border-bottom:0}
 summary{cursor:pointer;font-weight:700;color:#102a43}
 details p{color:#526579;margin-bottom:0}
 .link-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.national-distribution{margin-top:26px;padding-top:8px}
+.national-distribution h3{margin-bottom:6px;color:#102a43}
+.percentile-table{min-width:520px}
 @media(max-width:650px){.summary-grid strong{font-size:1.35rem}}
 </style>
