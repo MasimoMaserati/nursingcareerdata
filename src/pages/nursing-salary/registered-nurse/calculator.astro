@@ -47,6 +47,7 @@ const percent = (value) => value == null ? '—' : `${value > 0 ? '+' : ''}${val
         </section>
         <section class="personal-result" id="personal-result" hidden>
           <h3>Your salary compared with published medians</h3>
+          <p>Entered annual salary: <strong id="personal-salary-value">—</strong></p>
           <div class="personal-grid">
             <p>Versus <strong id="personal-state-name">{initial.state}</strong> median: <strong id="personal-state-difference">—</strong></p>
             <p>Versus U.S. median: <strong id="personal-national-difference">—</strong></p>
@@ -91,6 +92,7 @@ const percent = (value) => value == null ? '—' : `${value > 0 ? '+' : ''}${val
     const personalResult = document.getElementById('personal-result');
     if (salaryInput.value.trim() !== '' && Number.isFinite(salary) && salary >= 0) {
       personalResult.hidden = false;
+      setText('personal-salary-value', moneyFormat.format(salary));
       setText('personal-state-difference', signedMoney(salary - state.annualMedianWage));
       setText('personal-national-difference', signedMoney(salary - nationalMedian));
     } else {
@@ -99,7 +101,12 @@ const percent = (value) => value == null ? '—' : `${value > 0 ? '+' : ''}${val
   };
   if (select) {
     select.addEventListener('change', updateCalculator);
-    salaryInput.addEventListener('input', updateCalculator);
+    if (salaryInput) {
+      // Refresh comparisons immediately while typing and after the field is committed.
+      salaryInput.addEventListener('input', updateCalculator);
+      salaryInput.addEventListener('change', updateCalculator);
+      salaryInput.addEventListener('keyup', updateCalculator);
+    }
     updateCalculator();
   }
 </script>
