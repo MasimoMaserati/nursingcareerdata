@@ -1,0 +1,130 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import wages from '../../../data/rn-state-wages.json';
+import national from '../../../data/rn-national-wage.json';
+
+const published = wages
+  .filter((item) => item.annualMedianWage != null && item.referenceYear)
+  .sort((a, b) => a.state.localeCompare(b.state));
+const referenceYear = national.referenceYear ?? published[0]?.referenceYear ?? 2025;
+const initial = published[0];
+const money = (value, digits = 0) => value == null ? '—' : new Intl.NumberFormat('en-US', {
+  style: 'currency', currency: 'USD', minimumFractionDigits: digits, maximumFractionDigits: digits
+}).format(value);
+const percent = (value) => value == null ? '—' : `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
+---
+<BaseLayout title={`RN Salary Calculator by State (${referenceYear})`} description={`Compare your Registered Nurse salary with official BLS May ${referenceYear} state and U.S. wage estimates. Select a state and see annual median, mean, hourly mean, and differences from national benchmarks.`}>
+<main>
+  <p class="eyebrow">Registered Nurse salary tool · BLS OEWS</p>
+  <h1>RN Salary Calculator by State</h1>
+  <p class="lead">Choose a state to explore official Registered Nurse wage estimates and compare them with the U.S. benchmark. You can also enter your annual salary to see how it compares with published medians.</p>
+
+  {published.length > 0 ? <>
+    <section class="panel calculator" aria-labelledby="calculator-title">
+      <h2 id="calculator-title">Explore RN pay in your state</h2>
+      <div class="controls">
+        <label for="state-select">Select a state</label>
+        <select id="state-select">
+          {published.map((item) => <option value={item.stateSlug}>{item.state}</option>)}
+        </select>
+        <label for="salary-input">Your annual salary (optional)</label>
+        <div class="salary-input-wrap"><span aria-hidden="true">$</span><input id="salary-input" type="number" min="0" step="1000" inputmode="numeric" placeholder="e.g. 95000" /></div>
+        <p class="hint">Enter your gross annual salary before taxes. Leave blank to compare published BLS estimates only.</p>
+      </div>
+
+      <div class="results" id="salary-results" aria-live="polite">
+        <div class="result-heading"><div><p class="eyebrow">Selected location</p><h3 id="selected-state">{initial.state}</h3></div><span class="reference">May {referenceYear}</span></div>
+        <div class="metric-grid">
+          <article><span>Annual median wage</span><strong id="state-median">{money(initial.annualMedianWage)}</strong><small>50th percentile</small></article>
+          <article><span>Annual mean wage</span><strong id="state-mean">{money(initial.annualMeanWage)}</strong><small>Arithmetic average</small></article>
+          <article><span>Hourly mean wage</span><strong id="state-hourly">{money(initial.hourlyMeanWage, 2)}</strong><small>Average hourly wage</small></article>
+          <article><span>Employment</span><strong id="state-employment">{initial.employment == null ? '—' : Math.round(initial.employment).toLocaleString('en-US')}</strong><small>Estimated jobs</small></article>
+        </div>
+        <section class="benchmark" aria-labelledby="benchmark-title">
+          <h3 id="benchmark-title">Compared with the U.S. annual median</h3>
+          <p><strong id="national-difference">—</strong> <span id="national-percent"></span></p>
+          <p class="hint">U.S. annual median: {money(national.annualMedianWage)}. A positive difference means the selected state's median is higher; a negative difference means it is lower.</p>
+        </section>
+        <section class="personal-result" id="personal-result" hidden>
+          <h3>Your salary compared with published medians</h3>
+          <div class="personal-grid">
+            <p>Versus <strong id="personal-state-name">{initial.state}</strong> median: <strong id="personal-state-difference">—</strong></p>
+            <p>Versus U.S. median: <strong id="personal-national-difference">—</strong></p>
+          </div>
+          <p class="hint">This is a simple comparison with BLS wage medians, not a prediction of an individual's pay or take-home income.</p>
+        </section>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>How to read the calculator</h2>
+      <p>The annual median is the 50th percentile: half of reported wage observations are below it and half are above it. The annual mean is the arithmetic average. Hourly mean is the published BLS hourly average; it is not calculated by dividing annual pay by assumed work hours.</p>
+      <p>These are occupational estimates for Registered Nurses (SOC 29-1141), not guaranteed salaries. Actual pay varies by employer, experience, specialty, schedule, and local labor market.</p>
+      <p class="muted">Source: U.S. Bureau of Labor Statistics, Occupational Employment and Wage Statistics (OEWS). Reference period: May {referenceYear}.</p>
+      <p><a href="/nursing-salary/registered-nurse/">View the complete RN salary ranking by state →</a></p>
+    </section>
+  </> : <section class="panel"><h2>State wage data is not available</h2><p class="muted">The calculator will appear after the BLS state dataset has been imported and validated. No placeholder salary estimates are shown.</p></section>}
+</main>
+</BaseLayout>
+<script define:vars={{ stateData: published, nationalMedian: national.annualMedianWage }}>
+  const select = document.querySelector('#state-select');
+  const salaryInput = document.querySelector('#salary-input');
+  const moneyFormat = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  const hourlyFormat = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const signedMoney = (value) => `${value > 0 ? '+' : value < 0 ? '−' : ''}${moneyFormat.format(Math.abs(value))}`;
+  const setText = (id, value) => { const node = document.getElementById(id); if (node) node.textContent = value; };
+  const updateCalculator = () => {
+    const state = stateData.find((item) => item.stateSlug === select.value);
+    if (!state) return;
+    setText('selected-state', state.state);
+    setText('state-median', state.annualMedianWage == null ? '—' : moneyFormat.format(state.annualMedianWage));
+    setText('state-mean', state.annualMeanWage == null ? '—' : moneyFormat.format(state.annualMeanWage));
+    setText('state-hourly', state.hourlyMeanWage == null ? '—' : hourlyFormat.format(state.hourlyMeanWage));
+    setText('state-employment', state.employment == null ? '—' : Math.round(state.employment).toLocaleString('en-US'));
+    setText('personal-state-name', state.state);
+
+    const stateVsNational = state.annualMedianWage - nationalMedian;
+    setText('national-difference', signedMoney(stateVsNational));
+    setText('national-percent', `(${stateVsNational > 0 ? '+' : ''}${(stateVsNational / nationalMedian * 100).toFixed(1)}%)`);
+
+    const salary = Number(salaryInput.value);
+    const personalResult = document.getElementById('personal-result');
+    if (salaryInput.value.trim() !== '' && Number.isFinite(salary) && salary >= 0) {
+      personalResult.hidden = false;
+      setText('personal-state-difference', signedMoney(salary - state.annualMedianWage));
+      setText('personal-national-difference', signedMoney(salary - nationalMedian));
+    } else {
+      personalResult.hidden = true;
+    }
+  };
+  if (select) {
+    select.addEventListener('change', updateCalculator);
+    salaryInput.addEventListener('input', updateCalculator);
+    updateCalculator();
+  }
+</script>
+<style>
+.calculator{margin:28px 0}
+.controls{display:grid;gap:9px;max-width:560px;margin:22px 0 28px}
+.controls label{font-weight:700;color:#243b53}
+select,.salary-input-wrap{width:100%;min-height:48px;border:1px solid #cbd8e5;border-radius:10px;background:white;font:inherit;color:#142536}
+select{padding:10px 12px}
+.salary-input-wrap{display:flex;align-items:center;padding:0 12px;gap:8px}
+.salary-input-wrap span{color:#617589;font-weight:700}
+.salary-input-wrap input{width:100%;border:0;outline:0;font:inherit;background:transparent}
+.hint{color:#617589;font-size:.92rem;margin:0}
+.result-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #e1e8f0;padding-bottom:14px}
+.result-heading h3{margin:0;color:#102a43;font-size:1.5rem}
+.result-heading .eyebrow{margin:0 0 4px}
+.reference{font-size:.9rem;color:#617589}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:20px 0}
+.metric-grid article{display:flex;flex-direction:column;gap:6px;padding:17px;border:1px solid #e1e8f0;border-radius:12px;background:#f8fbfe}
+.metric-grid span,.metric-grid small{color:#617589}
+.metric-grid strong{font-size:1.45rem;color:#102a43}
+.benchmark,.personal-result{padding:18px;border-radius:12px;background:#f2f6fa;margin-top:16px}
+.benchmark h3,.personal-result h3{margin-top:0;color:#102a43}
+.benchmark p:last-child,.personal-result p:last-child{margin-bottom:0}
+.personal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.personal-grid p{margin:0}
+@media(max-width:600px){.result-heading{align-items:flex-start;flex-direction:column}.metric-grid strong{font-size:1.25rem}}
+</style>
