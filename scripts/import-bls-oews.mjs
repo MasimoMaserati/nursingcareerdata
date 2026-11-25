@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 
 const YEAR = 2025;
 const OCC_CODE = '29-1141';
-const SOURCE_URL = 'https://www.bls.gov/oes/special-requests/oesm25st.zip';
+const SOURCE_URL = 'https://www.bls.gov/oes/special.requests/oesm25st.zip';
 const SOURCE_PAGE = 'https://www.bls.gov/oes/tables.htm';
 
 const states = [
