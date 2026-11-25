@@ -112,7 +112,23 @@ if (!nationalRows.length) throw new Error('The BLS national workbook contains no
 const nationalHeaders = Object.keys(nationalRows[0]);
 for (const required of ['AREA','AREA_TITLE','OCC_CODE','A_MEAN','A_MEDIAN','H_MEAN','TOT_EMP']) {
   if (!nationalHeaders.includes(required)) throw new Error(`Unexpected BLS national workbook schema: missing ${required}`);
-}
+}const rnRows = nationalRows.filter(
+  row => String(row.OCC_CODE).trim() === OCC_CODE
+);
+
+console.log('National RN rows found:', rnRows.length);
+
+console.log(
+  'National RN row identifiers:',
+  rnRows.map(row => ({
+    AREA: row.AREA,
+    AREA_TITLE: row.AREA_TITLE,
+    NAICS: row.NAICS,
+    NAICS_TITLE: row.NAICS_TITLE,
+    OWN_CODE: row.OWN_CODE,
+    OWN_TITLE: row.OWN_TITLE
+  }))
+);
 const nationalMatches = nationalRows.filter((row) =>
   String(row.OCC_CODE).trim() === OCC_CODE &&
   (row.NAICS == null || String(row.NAICS).trim() === '000000') &&
