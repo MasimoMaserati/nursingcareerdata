@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 
 const YEAR = 2025;
 const OCC_CODE = '29-1141';
-const SOURCE_URL = 'https://www.bls.gov/oes/special.requests/oesm25st.zip';
+const SOURCE_URL = 'https://www.bls.gov/oes/special-requests/oesm25st.zip';
 const SOURCE_PAGE = 'https://www.bls.gov/oes/tables.htm';
 
 const states = [
@@ -34,8 +34,12 @@ console.log(`Downloading BLS OEWS May ${YEAR} state workbook...`);
 const response = await fetch(SOURCE_URL, { headers: { 'User-Agent': 'NursingCareerData/1.0 (public wage data ingestion)' } });
 if (!response.ok) throw new Error(`BLS download failed: HTTP ${response.status}`);
 const zipBytes = new Uint8Array(await response.arrayBuffer());
+if (zipBytes[0] !== 0x50 || zipBytes[1] !== 0x4b) {
+  const preview = new TextDecoder().decode(zipBytes.slice(0, 160)).replace(/\\s+/g, ' ');
+  throw new Error(`BLS state response is not a ZIP archive (content-type: ${response.headers.get('content-type') ?? 'unknown'}, bytes: ${zipBytes.length}, preview: ${preview})`);
+}
 const archive = unzipSync(zipBytes);
-const workbookEntry = Object.entries(archive).find(([name]) => /state.*m2025.*\.xlsx$/i.test(name));
+const workbookEntry = Object.entries(archive).find(([name]) => /oesm25st\.xlsx$/i.test(name));
 if (!workbookEntry) throw new Error('Could not find the May 2025 state XLSX workbook inside the BLS archive.');
 
 const workbook = XLSX.read(workbookEntry[1], { type: 'array' });
@@ -86,15 +90,20 @@ if (output.length < 45) {
 
 // Import the national estimate independently. Do not derive a U.S. figure by
 // averaging state wages: BLS publishes a separate national OEWS estimate.
-const NATIONAL_URL = 'https://www.bls.gov/oes/special.requests/oesm25nat.zip';
+const NATIONAL_URL = 'https://www.bls.gov/oes/special-requests/oesm25nat.zip';
 const NATIONAL_PAGE = 'https://www.bls.gov/oes/tables.htm';
 console.log(`Downloading BLS OEWS May ${YEAR} national workbook...`);
 const nationalResponse = await fetch(NATIONAL_URL, {
   headers: { 'User-Agent': 'NursingCareerData/1.0 (public wage data ingestion)' }
 });
 if (!nationalResponse.ok) throw new Error(`BLS national download failed: HTTP ${nationalResponse.status}`);
-const nationalArchive = unzipSync(new Uint8Array(await nationalResponse.arrayBuffer()));
-const nationalEntry = Object.entries(nationalArchive).find(([name]) => /national.*m2025.*\.xlsx$/i.test(name));
+const nationalBytes = new Uint8Array(await nationalResponse.arrayBuffer());
+if (nationalBytes[0] !== 0x50 || nationalBytes[1] !== 0x4b) {
+  const preview = new TextDecoder().decode(nationalBytes.slice(0, 160)).replace(/\\s+/g, ' ');
+  throw new Error(`BLS national response is not a ZIP archive (content-type: ${nationalResponse.headers.get('content-type') ?? 'unknown'}, bytes: ${nationalBytes.length}, preview: ${preview})`);
+}
+const nationalArchive = unzipSync(nationalBytes);
+const nationalEntry = Object.entries(nationalArchive).find(([name]) => /oesm25nat\.xlsx$/i.test(name));
 if (!nationalEntry) throw new Error('Could not find the May 2025 national XLSX workbook inside the BLS archive.');
 const nationalWorkbook = XLSX.read(nationalEntry[1], { type: 'array' });
 const nationalSheet = nationalWorkbook.Sheets[nationalWorkbook.SheetNames[0]];
