@@ -1,3 +1,4 @@
+
 {
   "name": "nursingcareerdata",
   "type": "module",
@@ -11,6 +12,7 @@
   },
   "dependencies": {
     "astro": "^5.16.0",
+    "@astrojs/sitemap": "^3.7.6",
     "fflate": "^0.8.2",
     "xlsx": "^0.18.5"
   },
