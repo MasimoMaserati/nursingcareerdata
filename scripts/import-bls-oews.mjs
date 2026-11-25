@@ -48,7 +48,7 @@ const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: null, raw: false });
 if (!rows.length) throw new Error('The BLS state workbook contains no rows.');
 
 const headerNames = Object.keys(rows[0]);
-for (const required of ['AREA_TITLE','OCC_CODE','A_MEAN','A_MEDIAN','H_MEAN','TOT_EMP']) {
+for (const required of ['AREA_TITLE','OCC_CODE','A_MEAN','A_MEDIAN','H_MEAN','H_MEDIAN','A_PCT10','A_PCT25','A_PCT75','A_PCT90','H_PCT10','H_PCT25','H_PCT75','H_PCT90','TOT_EMP']) {
   if (!headerNames.includes(required)) throw new Error(`Unexpected BLS workbook schema: missing ${required}`);
 }
 
@@ -72,6 +72,10 @@ for (const row of rows) {
     annualMedianWage: numeric(row.A_MEDIAN),
     hourlyMeanWage: numeric(row.H_MEAN),
     hourlyMedianWage: numeric(row.H_MEDIAN),
+    hourly10thPercentile: numeric(row.H_PCT10),
+    hourly25thPercentile: numeric(row.H_PCT25),
+    hourly75thPercentile: numeric(row.H_PCT75),
+    hourly90thPercentile: numeric(row.H_PCT90),
     employment: numeric(row.TOT_EMP),
     annual10thPercentile: numeric(row.A_PCT10),
     annual25thPercentile: numeric(row.A_PCT25),
@@ -110,33 +114,16 @@ const nationalSheet = nationalWorkbook.Sheets[nationalWorkbook.SheetNames[0]];
 const nationalRows = XLSX.utils.sheet_to_json(nationalSheet, { defval: null, raw: false });
 if (!nationalRows.length) throw new Error('The BLS national workbook contains no rows.');
 const nationalHeaders = Object.keys(nationalRows[0]);
-for (const required of ['AREA','AREA_TITLE','OCC_CODE','A_MEAN','A_MEDIAN','H_MEAN','TOT_EMP']) {
+for (const required of ['AREA','AREA_TITLE','OCC_CODE','A_MEAN','A_MEDIAN','H_MEAN','H_MEDIAN','A_PCT10','A_PCT25','A_PCT75','A_PCT90','H_PCT10','H_PCT25','H_PCT75','H_PCT90','TOT_EMP']) {
   if (!nationalHeaders.includes(required)) throw new Error(`Unexpected BLS national workbook schema: missing ${required}`);
-}const rnRows = nationalRows.filter(
-  row => String(row.OCC_CODE).trim() === OCC_CODE
-);
-
-console.log('National RN rows found:', rnRows.length);
-
-console.log(
-  'National RN row identifiers:',
-  rnRows.map(row => ({
-    AREA: row.AREA,
-    AREA_TITLE: row.AREA_TITLE,
-    NAICS: row.NAICS,
-    NAICS_TITLE: row.NAICS_TITLE,
-    OWN_CODE: row.OWN_CODE,
-    OWN_TITLE: row.OWN_TITLE
-  }))
-);
-const nationalMatches = nationalRows.filter((row) =>
+}const nationalMatches = nationalRows.filter((row) =>
   String(row.OCC_CODE).trim() === OCC_CODE &&
   (row.NAICS == null || String(row.NAICS).trim() === '000000') &&
   (row.OWN_CODE == null || String(row.OWN_CODE).trim() === '1235') &&
   String(row.AREA).trim() === '99'
 );
 if (nationalMatches.length !== 1) {
-  throw new Error(`Expected exactly one all-industry/all-ownership national RN row (AREA=1); found ${nationalMatches.length}. Refusing to publish guessed national figures.`);
+  throw new Error(`Expected exactly one all-industry/all-ownership national RN row (AREA=99); found ${nationalMatches.length}. Refusing to publish guessed national figures.`);
 }
 const nationalRow = nationalMatches[0];
 const nationalOutput = {
@@ -149,6 +136,10 @@ const nationalOutput = {
   annualMedianWage: numeric(nationalRow.A_MEDIAN),
   hourlyMeanWage: numeric(nationalRow.H_MEAN),
   hourlyMedianWage: numeric(nationalRow.H_MEDIAN),
+  hourly10thPercentile: numeric(nationalRow.H_PCT10),
+  hourly25thPercentile: numeric(nationalRow.H_PCT25),
+  hourly75thPercentile: numeric(nationalRow.H_PCT75),
+  hourly90thPercentile: numeric(nationalRow.H_PCT90),
   employment: numeric(nationalRow.TOT_EMP),
   annual10thPercentile: numeric(nationalRow.A_PCT10),
   annual25thPercentile: numeric(nationalRow.A_PCT25),
