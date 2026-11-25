@@ -39,8 +39,8 @@ if (zipBytes[0] !== 0x50 || zipBytes[1] !== 0x4b) {
   throw new Error(`BLS state response is not a ZIP archive (content-type: ${response.headers.get('content-type') ?? 'unknown'}, bytes: ${zipBytes.length}, preview: ${preview})`);
 }
 const archive = unzipSync(zipBytes);
-const workbookEntry = Object.entries(archive).find(([name]) => /oesm25st\.xlsx$/i.test(name));
-if (!workbookEntry) throw new Error('Could not find the May 2025 state XLSX workbook inside the BLS archive.');
+const workbookEntry = Object.entries(archive).find(([name]) => /state_M2025_dl\.xlsx$/i.test(name));
+if (!workbookEntry) throw new Error(`Could not find state_M2025_dl.xlsx inside BLS archive. Files found: ${Object.keys(archive).join(', ')}`);
 
 const workbook = XLSX.read(workbookEntry[1], { type: 'array' });
 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -103,8 +103,8 @@ if (nationalBytes[0] !== 0x50 || nationalBytes[1] !== 0x4b) {
   throw new Error(`BLS national response is not a ZIP archive (content-type: ${nationalResponse.headers.get('content-type') ?? 'unknown'}, bytes: ${nationalBytes.length}, preview: ${preview})`);
 }
 const nationalArchive = unzipSync(nationalBytes);
-const nationalEntry = Object.entries(nationalArchive).find(([name]) => /oesm25nat\.xlsx$/i.test(name));
-if (!nationalEntry) throw new Error('Could not find the May 2025 national XLSX workbook inside the BLS archive.');
+const nationalEntry = Object.entries(nationalArchive).find(([name]) => /national_M2025_dl\.xlsx$/i.test(name));
+if (!nationalEntry) throw new Error(`Could not find national_M2025_dl.xlsx inside BLS archive. Files found: ${Object.keys(nationalArchive).join(', ')}`);
 const nationalWorkbook = XLSX.read(nationalEntry[1], { type: 'array' });
 const nationalSheet = nationalWorkbook.Sheets[nationalWorkbook.SheetNames[0]];
 const nationalRows = XLSX.utils.sheet_to_json(nationalSheet, { defval: null, raw: false });
