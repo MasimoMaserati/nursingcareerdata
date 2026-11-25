@@ -133,7 +133,7 @@ const nationalMatches = nationalRows.filter((row) =>
   String(row.OCC_CODE).trim() === OCC_CODE &&
   (row.NAICS == null || String(row.NAICS).trim() === '000000') &&
   (row.OWN_CODE == null || String(row.OWN_CODE).trim() === '1235') &&
-  String(row.AREA).trim() === '1'
+  String(row.AREA).trim() === '99'
 );
 if (nationalMatches.length !== 1) {
   throw new Error(`Expected exactly one all-industry/all-ownership national RN row (AREA=1); found ${nationalMatches.length}. Refusing to publish guessed national figures.`);
